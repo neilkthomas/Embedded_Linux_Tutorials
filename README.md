@@ -1,4 +1,4 @@
-# embbeded_linux_tutorials
+# Embedded Linux Tutorials
 #############################################################
 
 Contents
