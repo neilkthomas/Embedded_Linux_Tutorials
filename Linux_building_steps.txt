@@ -1,0 +1,51 @@
+
+Linux Kernel building steps
+########################################################################
+
+# Update and install necessary build tools
+$ sudo apt-get update
+$ sudo apt-get install  build-essential ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison fakeroot 
+
+# Download Linux kernel
+$ wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.20.4.tar.xz
+
+# Extract Kernel source code
+$ tar xf linux-4.20.4.tar.xz
+
+# Copy Kernel configuration of your Linux machine
+$ cp /boot/config-$(uname -r) .config
+
+# Modify Kernel configuration if required, You can enable debugging features 
+$ make menuconfig
+
+# Build the kernel 
+$ make -j4  
+
+# After successful building you can see Kernel images at linux-4.20.1/arch/x86/boot/bzImage  (32bit Host )or linux-4.20.1/arch/x86_64//boot/bzImage (64 bit host Machine)
+$ cd linux-4.20.1/arch/x86/boot/
+
+# Creating Initramfs 
+$ mkinitramfs -o initrd.img-4.20.1
+
+
+
+
+Running Linux Kernel on Qemu emulator
+##########################################################################
+
+# Install Qemu in your Linux host Machine
+$ sudo apt-get update
+$ sudo apt-get install qemu-kvm qemu virt-manager virt-viewer libvirt-bin
+
+
+
+$ qemu-system-x86_64 -kernel bzImage -initrd initrd.img-4.20.1 -m 512M
+# 32 Bit machine 
+$ qemu-system-i386 -kernel bzImage -initrd initrd.img-4.20.1 -m 512M
+
+# Linux kernel boots on Qemu virtul machine
+# check the Kernel version, build time
+$ uname -a 
+
+
+
