@@ -39,7 +39,7 @@ $ sudo apt-get install qemu-kvm qemu virt-manager virt-viewer libvirt-bin
 
 
 
-$ qemu-system-x86_64 -kernel bzImage -initrd initrd.img-4.20.1 -m 512M
+$ qemu-system-x86_64 -kernel bzImage -initrd initrd.img-4.20.1 -m 1024M
 # 32 Bit machine 
 $ qemu-system-i386 -kernel bzImage -initrd initrd.img-4.20.1 -m 512M
 
@@ -48,4 +48,14 @@ $ qemu-system-i386 -kernel bzImage -initrd initrd.img-4.20.1 -m 512M
 $ uname -a 
 
 
+
+
+# For testing Linux kernel and initramfs binaries are shared
+Linux_kernel_4.20.4_x86_64_binaries/
+|
+|--bzImage
+|
+|--initrd.img-4.20.1  
+
+$ qemu-system-x86_64 -kernel bzImage -initrd initrd.img-4.20.1 -m 1024M
 
