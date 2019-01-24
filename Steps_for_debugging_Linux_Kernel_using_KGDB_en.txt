@@ -1,0 +1,147 @@
+
+
+Debugging the Linux kernel using KGDB
+
+For debugging with Kgdb we needed two computers one is target machine and other is host. Here we setup two machine inside the virtual box emulator due to the lack of two machines. 
+
+Target Machine : Contains the kernel which we want to debug.
+Host Machine : Used to debug the target machine kernel. Host machine is connected to target machine via serial port.
+
+Requirements
+
+1)Virtual Box inside the Windows PC ( Windows 7 or Higher)
+
+2)Create two Linux Machine inside the Virtual Box (Use Ubuntu 16.04 OS or higher)
+Host and target machine is installed with Ubuntu 16.04, 64 bit OS.
+
+Building the kernel source with kgdb debugging support and install the new kernel in Target Machine.
+
+Install pre-requisites
+$sudo apt-get install libncurses5-dev gcc make git exuberant-ctags bc libssl-dev
+
+Download the source code (Here am using Linux Kernel 4.13.8)
+$wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.13.8.tar.xz
+
+Copy the default build configuration from running Linux OS
+$cp /boot/config-`uname -r`* .config
+
+Modify and make sure that below options are enabled for kernel debugging in the config file.
+$gedit .config
+
+        CONFIG_DEBUG_KERNEL=y
+        CONFIG_FRAME_POINTER=y
+        CONFIG_KGDB=y
+        CONFIG_KGDB_SERIAL_CONSOLE=y
+        CONFIG_DEBUG_INFO=y
+	
+or 
+	
+We can also modify the kernel dubuging options through the graphical user interface using menuconfig.
+$make menuconfig
+
+Then enable all above options from Kernel Hacking options.
+		
+Compiling the source code. (-j2 is given to build the source in two threads using avaliable cores in the processor)
+$make -j2		
+
+Copy the new kernel image "vmlinux" to the host machine. This is need for debugging and loading the symbols of target machine kernel images from host.
+
+
+Installing the kernel
+$sudo make modules_install install
+
+Update the Grub boot loader entries
+$sudo update-grub2
+
+Modify the Grub boot options to show different Operating systems entries.
+$sudo gedit /etc/default/grub
+And comment the following lines
+#GRUB_HIDDEN_TIMEOUT=0
+#GRUB_HIDDEN_TIMEOUT_QUIET=true
+
+To enable KGDB serial console support from the Host, we need to append the options kgdboc=ttyS0 and 115200 kgdbwait to the kernel command-line. 
+Here, kgdboc (KGDB over console) uses ttyS0 with the baud rate defined as 115200. 
+The kgdbwait option tells the kernel to wait until we connect to it with GDB.
+
+#sudo gedit /boot/grub/grub.cfg 
+
+Append the following line in the latest Kernel entries boot options. 
+kgdbwait kgdboc=ttyS0,115200
+
+It looks like following lines 
+/**************************************/
+menuentry 'Ubuntu' --class ubuntu --class gnu-linux --class gnu --class os $menuentry_id_option 'gnulinux-simple-95261f9c-96a1-4afa-b0f5-fedb98135702' {
+	recordfail
+	load_video
+	gfxmode $linux_gfx_mode
+	insmod gzio
+	if [ x$grub_platform = xxen ]; then insmod xzio; insmod lzopio; fi
+	insmod part_msdos
+	insmod ext2
+	set root='hd0,msdos1'
+	if [ x$feature_platform_search_hint = xy ]; then
+	  search --no-floppy --fs-uuid --set=root --hint-bios=hd0,msdos1 --hint-efi=hd0,msdos1 --hint-baremetal=ahci0,msdos1  95261f9c-96a1-4afa-b0f5-fedb98135702
+	else
+	  search --no-floppy --fs-uuid --set=root 95261f9c-96a1-4afa-b0f5-fedb98135702
+	fi
+	linux	/boot/vmlinuz-4.13.8 root=UUID=95261f9c-96a1-4afa-b0f5-fedb98135702 ro  quiet splash $vt_handoff kgdbwait kgdboc=ttyS0,115200
+	initrd	/boot/initrd.img-4.13.8
+}
+/**************************************/
+
+
+Then shutdown this target machine.
+
+
+
+Add serial interfaces to target and host machines.
+
+Target machine settings.
+Virtual box target machine settings -> Serial Port .
+1)Enable Serial port.
+2)Port Number:COM1.
+3)Port Mode:Host Pipe.
+4)Connect to existing pipe/socket : leave it blank. Don't  enable.
+5)Path/Address:\\.\pipe\myvbox
+
+Then start the machine. Select the Ist Ubuntu OS Entry.   OS will not boot untill it is start from debuger of host machine.
+
+ We can press 'e' on boot menu after selecting Ist Ubuntu OS entry to see the Kgdb options added in boot settings.
+
+
+Host machine settings.
+Virtual box target machine settings -> Serial Port .
+1)Enable Serial port.
+2)Port Number:COM1.
+3)Port Mode:Host Pipe.
+4)Connect to existing pipe/socket : Select and enable.
+5)Path/Address:\\.\pipe\myvbox
+
+Start the Debugging 
+
+Start the host machine. (Don't forget to start the target machine first, because this host machine is connected to tartget machines serial port. If it is not available, error message will shows and host machine does not boot)
+
+
+Go to directory where the target machine kernel image is already copied. Then change to super user mode.
+
+$sudo su
+
+#gdb ./vmlinux
+
+Then sysmbols gets loaded .
+
+Connect the tartget machine
+#target remote /dev/ttyS0
+
+Then we can put the break points or start the target machine by typing continue.
+#gdb continue
+Then target machine OS boot and works normaly.
+
+
+
+
+
+
+
+
+
